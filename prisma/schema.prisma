@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Project {
+  id            String         @id @default(cuid())
+  name          String
+  repoPath      String         @unique
+  description   String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  markdownFiles MarkdownFile[]
+  commits       CommitEntry[]
+  logEntries    LogEntry[]
+}
+
+model MarkdownFile {
+  id           String   @id @default(cuid())
+  path         String
+  title        String?
+  content      String?
+  lastModified DateTime?
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, path])
+}
+
+model CommitEntry {
+  id           String   @id @default(cuid())
+  hash         String
+  message      String
+  author       String
+  committedAt  DateTime
+  changedFiles String
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, hash])
+}
+
+model LogEntry {
+  id           String   @id @default(cuid())
+  date         DateTime @default(now())
+  summary      String
+  changedFiles String
+  relatedDocs  String?
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
