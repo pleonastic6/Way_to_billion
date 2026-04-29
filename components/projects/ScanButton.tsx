@@ -29,7 +29,7 @@ export function ScanButton({ projectId }: ScanButtonProps) {
       }
 
       setMessage(
-        `${payload.markdownCount} Markdown-Dateien und ${payload.commitCount} Commits eingelesen.`,
+        `${payload.markdownCount} Markdown-Dateien, ${payload.commitCount} Commits und ${payload.logCount} Logeinträge eingelesen.`,
       );
       router.refresh();
     } catch (err) {

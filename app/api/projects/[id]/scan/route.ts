@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getRecentCommits } from "@/lib/git";
+import { buildLogEntriesFromCommits } from "@/lib/logs";
 import { extractFirstHeading } from "@/lib/markdown";
 import { scanRepo } from "@/lib/repo-scan";
 
@@ -58,9 +59,25 @@ export async function POST(_: Request, { params }: RouteContext) {
     });
   }
 
+  await prisma.logEntry.deleteMany({ where: { projectId: project.id } });
+
+  const logEntries = buildLogEntriesFromCommits(commits);
+  for (const entry of logEntries) {
+    await prisma.logEntry.create({
+      data: {
+        projectId: project.id,
+        date: entry.date,
+        summary: entry.summary,
+        changedFiles: entry.changedFiles,
+        relatedDocs: entry.relatedDocs,
+      },
+    });
+  }
+
   return NextResponse.json({
     ok: true,
     markdownCount: markdownFiles.length,
     commitCount: commits.length,
+    logCount: logEntries.length,
   });
 }

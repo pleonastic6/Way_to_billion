@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ScanButton } from "@/components/projects/ScanButton";
 import { prisma } from "@/lib/db";
+import { parseJsonList } from "@/lib/logs";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -62,14 +63,32 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               <EmptyState text="Noch keine Commits eingelesen. Starte zuerst einen Repo-Scan." />
             ) : (
               <ul className="space-y-3">
-                {project.commits.map((commit) => (
-                  <li key={commit.id} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-                    <div className="font-medium text-zinc-100">{commit.message}</div>
-                    <div className="mt-1 text-sm text-zinc-400">
-                      {commit.author} · {formatDate(commit.committedAt)}
-                    </div>
-                  </li>
-                ))}
+                {project.commits.map((commit) => {
+                  const changedFiles = parseJsonList(commit.changedFiles);
+
+                  return (
+                    <li key={commit.id} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+                      <div className="font-medium text-zinc-100">{commit.message}</div>
+                      <div className="mt-1 text-sm text-zinc-400">
+                        {commit.author} · {formatDate(commit.committedAt)}
+                      </div>
+                      {changedFiles.length > 0 ? (
+                        <ul className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-300">
+                          {changedFiles.slice(0, 5).map((file) => (
+                            <li key={file} className="rounded-full border border-zinc-700 px-2 py-1">
+                              {file}
+                            </li>
+                          ))}
+                          {changedFiles.length > 5 ? (
+                            <li className="rounded-full border border-zinc-700 px-2 py-1 text-zinc-500">
+                              +{changedFiles.length - 5} weitere
+                            </li>
+                          ) : null}
+                        </ul>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </Section>
@@ -95,15 +114,36 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             <EmptyState text="Noch keine Logeinträge vorhanden." />
           ) : (
             <ul className="space-y-3">
-              {project.logEntries.map((entry) => (
-                <li key={entry.id} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-                  <div className="text-sm text-zinc-500">{formatDate(entry.date)}</div>
-                  <div className="mt-1 font-medium text-zinc-100">{entry.summary}</div>
-                  <div className="mt-2 text-sm text-zinc-400">
-                    {entry.relatedDocs || "Keine verknüpften Doku-Dateien"}
-                  </div>
-                </li>
-              ))}
+              {project.logEntries.map((entry) => {
+                const relatedDocs = parseJsonList(entry.relatedDocs);
+                const changedFiles = parseJsonList(entry.changedFiles);
+
+                return (
+                  <li key={entry.id} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+                    <div className="text-sm text-zinc-500">{formatDate(entry.date)}</div>
+                    <div className="mt-1 font-medium text-zinc-100">{entry.summary}</div>
+
+                    {relatedDocs.length > 0 ? (
+                      <div className="mt-3">
+                        <div className="mb-2 text-xs uppercase tracking-wide text-zinc-500">Doku betroffen</div>
+                        <ul className="flex flex-wrap gap-2 text-xs text-zinc-300">
+                          {relatedDocs.map((doc) => (
+                            <li key={doc} className="rounded-full border border-zinc-700 px-2 py-1">
+                              {doc}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+
+                    {changedFiles.length > 0 ? (
+                      <div className="mt-3 text-sm text-zinc-400">
+                        {changedFiles.length} geänderte Datei{changedFiles.length === 1 ? "" : "en"}
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Section>
