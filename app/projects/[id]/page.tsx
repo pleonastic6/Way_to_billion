@@ -51,6 +51,15 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           </div>
         </div>
 
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={`/projects/${project.id}/summary`}
+            className="inline-flex rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800"
+          >
+            Zur Summary
+          </Link>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="Markdown-Dateien" value={String(project.markdownFiles.length)} />
           <StatCard label="Commits" value={String(project.commits.length)} />
